@@ -79,7 +79,9 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 	
 	/** {@link #Interval} of the aligned query sequence */
 	protected Interval queryIntval;
-	
+
+	Map<POGEdge, Set<Integer>> edgeReadIdx;
+
 	/**
 	 * Default constructor.
 	 */
@@ -133,6 +135,7 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 		
 		scoreMat = otherPOG.scoreMat;
 		readIDX = otherPOG.readIDX;
+		this.edgeReadIdx = new HashMap<>(otherPOG.edgeReadIdx);
 		this.computeInternalDS();
 		this.initMatrix();
 	}
@@ -165,7 +168,11 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 			}
 		}
 	}
-	
+
+	public Set<Integer> getEdgeIdx(POGEdge e) {
+		return this.edgeReadIdx.get(e);
+	}
+
 	/**
 	 * Align the sequence to the POGraph without adding nodes/edges, and return the backtracked list of 
 	 * {@link #POGNodes} representing the path of the aligned sequence.
@@ -231,7 +238,11 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 		
 		return alignLst;
 	}
-	
+
+	public DefaultDirectedGraph<POGNode,POGEdge> getGraph() {
+		return this.g;
+	}
+
 	/**
 	 * Compute the consensus sequence, as represented by the heaviest path
 	 * @return {@code String} consensus sequence of the heaviest path.
@@ -330,13 +341,26 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 	 * @param dotFilename {@code String} DOT filename
 	 */
 	public void toDOT(String dotFilename) {
+		this.toDOT(dotFilename, false);
+	}
+
+	/**
+	 * Output graph to a DOT file
+	 * @param dotFilename {@code String} DOT filename
+	 * @param showNodeLabels boolean to show nodes with labels or not.
+	 */
+	public void toDOT(String dotFilename, boolean showNodeLabels) {
 		this.computeInternalDS();
 		try(PrintWriter pout = new PrintWriter(dotFilename)) {
 			pout.println("digraph g {");
 			for(int i = 0; i < this.nodeList.size(); i++) {
 //				pout.println( i + " [label = \"" + i + ": "+ this.nodeList.get(i).toString() + "\"];");
 				double nodeSize = (1.0+Math.ceil(Math.log((double)this.nodeList.get(i).getNumReads()))) / 2.0;
-				pout.println( i + " [shape=point, width = " + nodeSize + "];");
+				String nodeStr = showNodeLabels
+						? (" [shape=circle, width = " + nodeSize + ",\t label=\"" + this.nodeList.get(i).getCH() + "\", fontsize=\"18pt\"];")
+						: " [shape=point, width = " + nodeSize + "];";
+				pout.println(i + nodeStr);
+				//pout.println( i + " [shape=point, width = " + nodeSize + "];");
 //				pout.println( i + " [shape=circle, width = " + nodeSize + "\t, label=\"" + this.nodeList.get(i).getCH() + "\"];");
 			}
 			for(POGEdge edge : this.g.edgeSet()) {
@@ -390,6 +414,7 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 		this.ptrMat = new AlignPOGPtrMatrix(MAX_NODES, MAX_SEQ_LEN);
 		scoreMat = sm;
 		readIDX = 0;
+		this.edgeReadIdx = new HashMap<>();
 	}
 	
 	/**
@@ -402,14 +427,22 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 			POGNode currNode =  new POGNode(seq.charAt(i), 0);
 			g.addVertex( currNode );
 			if(prevNode != null) {
-				g.addEdge(prevNode, currNode);
+				POGEdge e = g.addEdge(prevNode, currNode);
+				this.safeEdgeAddIdx(e, readIDX);
 			}
 			alignedG.addVertex(currNode);
 			prevNode = currNode;
 		}	
 		readIDX++;
 	}	
-	
+
+	protected void safeEdgeAddIdx(POGEdge e, int idx) {
+		if (!this.edgeReadIdx.containsKey(e)) {
+			this.edgeReadIdx.put(e, new HashSet<>());
+		}
+		this.edgeReadIdx.get(e).add(idx);
+	}
+
 	/**
 	 * Return the cell in the score matrix to start backtracking from, with first => node IDX, and second => seq IDX.
 	 * @param maxSeqLen 
@@ -462,6 +495,9 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 			if (prevNode != null && !g.containsEdge(currNode, prevNode)) {
 				g.addEdge(currNode, prevNode);
 			}
+			POGEdge e = g.getEdge(currNode, prevNode);
+			this.safeEdgeAddIdx(e, readIDX);
+
 			prevNode = currNode;
 		} else if(currPtr.type() == PointerType.DEL) {
 			// don't add vertex, keep prevNode the same
@@ -471,6 +507,8 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 			if(prevNode != null) {
 				g.addEdge(newNode, prevNode);
 			}
+			POGEdge e = g.getEdge(newNode, prevNode);
+			this.safeEdgeAddIdx(e, readIDX);
 			if(log.isTraceEnabled()) {
 				log.trace("INSERTION:\t" + newNode + " <- " + prevNode);
 			}
@@ -481,7 +519,8 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 			POGNode newNode = new POGNode(seqCH, this.readIDX);
 			g.addVertex(newNode);
 			if(prevNode != null) {
-				g.addEdge(newNode, prevNode);
+				POGEdge e = g.addEdge(newNode, prevNode);
+				this.safeEdgeAddIdx(e, readIDX);
 				// add node/edges for alignedTo graph
 //				if (!is_ins) {
 				if(currPtr.type() == PointerType.MIS) { // prevP
@@ -489,7 +528,8 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 					// connect to all incoming edges
 					for(POGEdge inedge : this.g.incomingEdgesOf(currNode)) {
 						POGNode algnToPrevNode = this.g.getEdgeSource(inedge);
-						g.addEdge(algnToPrevNode, newNode);
+						POGEdge lclE = g.addEdge(algnToPrevNode, newNode);
+						this.safeEdgeAddIdx(lclE, readIDX);
 					}
 				}
 				if(log.isTraceEnabled()) {
@@ -709,6 +749,7 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 //		log.debug("ALIGNED TO:\t" + newNode + " => " + algnNode);
 		alignedG.addVertex(newNode);
 		alignedG.addEdge(algnNode, newNode);
+
 		Set<POGEdge> incEdges = alignedG.edgesOf(algnNode);
 		for(POGEdge e : incEdges) {
 			POGNode dest = alignedG.getEdgeTarget(e);

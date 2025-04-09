@@ -89,6 +89,7 @@ public class POGraphOverlapTest {
 			num++;
 		}
 		assertEquals(48, num);
+		//pog.toDOT("test-align-pog.dot", true);
 	}
 
 	@SuppressWarnings("unchecked")
