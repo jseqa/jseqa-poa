@@ -2,8 +2,10 @@ package jseqa.poa;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import jseqa.util.Interval;
+import org.jgrapht.graph.DefaultDirectedGraph;
 
 /**
  * Interface for all partial order alignment graphs.
@@ -48,7 +50,15 @@ public interface PartialOrderAlignment {
 	 * @param dotFilename {@code String} DOT filename
 	 */
 	public void toDOT(String dotFilename);
-	
+
+	public void toDOT(String dotFilename, boolean showNodeLabels);
+
+	/**
+	 * Get the internal graph representation of the POGraph for analysis.
+	 * @return
+	 */
+	public DefaultDirectedGraph<POGNode,POGEdge> getGraph();
+
 	/**
 	 * Get the number of nodes in the partial order alignment graph
 	 * @return
@@ -61,4 +71,6 @@ public interface PartialOrderAlignment {
 	 * @return
 	 */
 	public Interval queryInterval();
+
+	public Set<Integer> getEdgeIdx(POGEdge e);
 }
