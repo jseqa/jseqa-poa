@@ -1,5 +1,6 @@
 package jseqa.poa;
 
+import java.util.Collection;
 import jseqa.alignment.substitution.SubstitutionMatrix;
 import jseqa.poa.POGPtr.PointerType;
 import jseqa.util.Pair;
@@ -15,12 +16,28 @@ public class POGraphFitting extends AbstractPartialOrderGraph {
 	public POGraphFitting() {
 		super();
 	}
+
+	public POGraphFitting(POGNodeFactory nodeFactory) {
+		super(nodeFactory);
+	}
 	
 	/**
 	 * {@inheritDoc}
 	 */
 	public POGraphFitting(String initseq) {
 		super(initseq);
+	}
+
+	public POGraphFitting(String initseq, POGNodeFactory nodeFactory) {
+		super(initseq, nodeFactory);
+	}
+
+	public POGraphFitting(Collection<String> alignment) {
+		super(alignment);
+	}
+
+	public POGraphFitting(Collection<String> alignment, POGNodeFactory nodeFactory) {
+		super(alignment, nodeFactory);
 	}
 	
 	/**
@@ -29,12 +46,29 @@ public class POGraphFitting extends AbstractPartialOrderGraph {
 	public POGraphFitting(SubstitutionMatrix sm) {
 		super(sm);
 	}
+
+	public POGraphFitting(SubstitutionMatrix sm, POGNodeFactory nodeFactory) {
+		super(sm, nodeFactory);
+	}
 	
 	/**
 	 * {@inheritDoc}
 	 */
 	public POGraphFitting(String initSeq, SubstitutionMatrix sm) {
 		super(initSeq, sm);
+	}
+
+	public POGraphFitting(String initSeq, SubstitutionMatrix sm, POGNodeFactory nodeFactory) {
+		super(initSeq, sm, nodeFactory);
+	}
+
+	public POGraphFitting(Collection<String> alignment, SubstitutionMatrix sm) {
+		super(alignment, sm);
+	}
+
+	public POGraphFitting(Collection<String> alignment, SubstitutionMatrix sm,
+			POGNodeFactory nodeFactory) {
+		super(alignment, sm, nodeFactory);
 	}
 	
 	/**

@@ -1,5 +1,6 @@
 package jseqa.poa;
 
+import java.util.Collection;
 import java.util.List;
 
 import jseqa.alignment.substitution.SubstitutionMatrix;
@@ -15,12 +16,28 @@ public class POGraphLocal extends AbstractPartialOrderGraph {
 	public POGraphLocal() {
 		super();
 	}
+
+	public POGraphLocal(POGNodeFactory nodeFactory) {
+		super(nodeFactory);
+	}
 		
 	/**
 	 * {@inheritDoc}
 	 */
 	public POGraphLocal(String initseq) {
 		super(initseq);
+	}
+
+	public POGraphLocal(String initseq, POGNodeFactory nodeFactory) {
+		super(initseq, nodeFactory);
+	}
+
+	public POGraphLocal(Collection<String> alignment) {
+		super(alignment);
+	}
+
+	public POGraphLocal(Collection<String> alignment, POGNodeFactory nodeFactory) {
+		super(alignment, nodeFactory);
 	}
 	
 	/**
@@ -29,12 +46,29 @@ public class POGraphLocal extends AbstractPartialOrderGraph {
 	public POGraphLocal(SubstitutionMatrix sm) {
 		super(sm);
 	}
+
+	public POGraphLocal(SubstitutionMatrix sm, POGNodeFactory nodeFactory) {
+		super(sm, nodeFactory);
+	}
 	
 	/**
 	 * {@inheritDoc}
 	 */
 	public POGraphLocal(String initSeq, SubstitutionMatrix sm) {
 		super(initSeq, sm);
+	}
+
+	public POGraphLocal(String initSeq, SubstitutionMatrix sm, POGNodeFactory nodeFactory) {
+		super(initSeq, sm, nodeFactory);
+	}
+
+	public POGraphLocal(Collection<String> alignment, SubstitutionMatrix sm) {
+		super(alignment, sm);
+	}
+
+	public POGraphLocal(Collection<String> alignment, SubstitutionMatrix sm,
+			POGNodeFactory nodeFactory) {
+		super(alignment, sm, nodeFactory);
 	}
 	
 	/**
@@ -94,8 +128,8 @@ public class POGraphLocal extends AbstractPartialOrderGraph {
 	protected Pair<Integer,Integer> backtrackFromCell(int maxSeqLen) {
 		Pair<Integer,Integer> maxCell = new Pair<Integer,Integer>(-1,-1);
 		double maxScore = -10000000.0;
-		for(int i = 0; i < this.numNodes(); i++) {
-			for(int j = 0; j < maxSeqLen; j++) {
+		for(int i = 0; i <= this.numNodes(); i++) {
+			for(int j = 0; j <= maxSeqLen; j++) {
 				if(this.alignScoreMat.get(i, j) > maxScore) {
 					maxScore = this.alignScoreMat.get(i, j);
 					maxCell = new Pair<Integer,Integer> (i, j);

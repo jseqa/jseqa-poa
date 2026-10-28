@@ -52,6 +52,13 @@ public class POGNode {
 		init();
 		idx.add(nidx);
 	}
+
+	/** Create an independent node with the same residue and read membership. */
+	POGNode(POGNode other) {
+		ch = other.ch;
+		init();
+		idx.addAll(other.idx);
+	}
 	
 	/**
 	 * 

@@ -1,5 +1,6 @@
 package jseqa.poa;
 
+import java.util.Collection;
 import jseqa.alignment.substitution.SubstitutionMatrix;
 import jseqa.poa.POGPtr.PointerType;
 import jseqa.util.Pair;
@@ -16,12 +17,28 @@ public class POGraphOverlap extends AbstractPartialOrderGraph {
 	public POGraphOverlap() {
 		super();
 	}
+
+	public POGraphOverlap(POGNodeFactory nodeFactory) {
+		super(nodeFactory);
+	}
 	
 	/**
 	 * {@inheritDoc}
 	 */
 	public POGraphOverlap(String initseq) {
 		super(initseq);
+	}
+
+	public POGraphOverlap(String initseq, POGNodeFactory nodeFactory) {
+		super(initseq, nodeFactory);
+	}
+
+	public POGraphOverlap(Collection<String> alignment) {
+		super(alignment);
+	}
+
+	public POGraphOverlap(Collection<String> alignment, POGNodeFactory nodeFactory) {
+		super(alignment, nodeFactory);
 	}
 	
 	/**
@@ -30,12 +47,29 @@ public class POGraphOverlap extends AbstractPartialOrderGraph {
 	public POGraphOverlap(SubstitutionMatrix sm) {
 		super(sm);
 	}
+
+	public POGraphOverlap(SubstitutionMatrix sm, POGNodeFactory nodeFactory) {
+		super(sm, nodeFactory);
+	}
 	
 	/**
 	 * {@inheritDoc}
 	 */
 	public POGraphOverlap(String initSeq, SubstitutionMatrix sm) {
 		super(initSeq, sm);
+	}
+
+	public POGraphOverlap(String initSeq, SubstitutionMatrix sm, POGNodeFactory nodeFactory) {
+		super(initSeq, sm, nodeFactory);
+	}
+
+	public POGraphOverlap(Collection<String> alignment, SubstitutionMatrix sm) {
+		super(alignment, sm);
+	}
+
+	public POGraphOverlap(Collection<String> alignment, SubstitutionMatrix sm,
+			POGNodeFactory nodeFactory) {
+		super(alignment, sm, nodeFactory);
 	}
 
 	/**

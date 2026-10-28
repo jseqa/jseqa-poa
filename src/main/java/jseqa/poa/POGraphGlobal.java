@@ -1,5 +1,6 @@
 package jseqa.poa;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,6 +25,11 @@ public class POGraphGlobal extends AbstractPartialOrderGraph {
 		super();
 		this.initNodeSets();
 	}
+
+	public POGraphGlobal(POGNodeFactory nodeFactory) {
+		super(nodeFactory);
+		this.initNodeSets();
+	}
 		
 	/** {@inheritDoc} */
 	public POGraphGlobal(String initseq) {
@@ -31,10 +37,33 @@ public class POGraphGlobal extends AbstractPartialOrderGraph {
 		this.initNodeSets();
 		this.initStartNodesInMatrix();
 	}
+
+	public POGraphGlobal(String initseq, POGNodeFactory nodeFactory) {
+		super(initseq, nodeFactory);
+		this.initNodeSets();
+		this.initStartNodesInMatrix();
+	}
+
+	public POGraphGlobal(Collection<String> alignment) {
+		super(alignment);
+		this.initNodeSets();
+		this.initializeEndpointMapsFromGraph();
+	}
+
+	public POGraphGlobal(Collection<String> alignment, POGNodeFactory nodeFactory) {
+		super(alignment, nodeFactory);
+		this.initNodeSets();
+		this.initializeEndpointMapsFromGraph();
+	}
 	
 	/** {@inheritDoc} */
 	public POGraphGlobal(SubstitutionMatrix sm) {
 		super(sm);
+		this.initNodeSets();
+	}
+
+	public POGraphGlobal(SubstitutionMatrix sm, POGNodeFactory nodeFactory) {
+		super(sm, nodeFactory);
 		this.initNodeSets();
 	}
 	
@@ -44,10 +73,31 @@ public class POGraphGlobal extends AbstractPartialOrderGraph {
 		this.initNodeSets();
 		this.initStartNodesInMatrix();
 	}
+
+	public POGraphGlobal(String initSeq, SubstitutionMatrix sm, POGNodeFactory nodeFactory) {
+		super(initSeq, sm, nodeFactory);
+		this.initNodeSets();
+		this.initStartNodesInMatrix();
+	}
+
+	public POGraphGlobal(Collection<String> alignment, SubstitutionMatrix sm) {
+		super(alignment, sm);
+		this.initNodeSets();
+		this.initializeEndpointMapsFromGraph();
+	}
+
+	public POGraphGlobal(Collection<String> alignment, SubstitutionMatrix sm,
+			POGNodeFactory nodeFactory) {
+		super(alignment, sm, nodeFactory);
+		this.initNodeSets();
+		this.initializeEndpointMapsFromGraph();
+	}
 	
 	/** {@inheritDoc} */
 	public POGraphGlobal(AbstractPartialOrderGraph pog) {
 		super(pog);
+		this.initNodeSets();
+		this.initializeEndpointMapsFromGraph();
 	}
 	
 	private void initNodeSets() {
@@ -58,8 +108,6 @@ public class POGraphGlobal extends AbstractPartialOrderGraph {
 	/** {@inheritDoc} */
 	@Override
 	public void add(String seq) {
-		this.initMatrix();
-		this.initStartNodesInMatrix();
 		super.add(seq);
 		this.computeInternalDS();
 		this.addStartEndNodes();
@@ -75,24 +123,22 @@ public class POGraphGlobal extends AbstractPartialOrderGraph {
 	 * Go through all nodes, add first/last of current read to start/end set
 	 */
 	private void addStartEndNodes() {
-		int firstIdx = -1;
 		int currReadIdx = this.readIDX-1;
-		// check for first node for current read
+		POGNode firstCurrIdxNode = null;
 		POGNode lastCurrIdxNode = null;
-		int lastIdx = -1;
 		for(int i = 0; i < this.nodeList.size(); i++) {
 			POGNode currNode = this.nodeList.get(i);
 			if(currNode.getIDX().contains(currReadIdx)) {
-				if(firstIdx < 0) {
-					firstIdx = 0;
-					this.startNodes.put(currNode, i);
-				} else {
-					lastCurrIdxNode = currNode;
-					lastIdx = i+1;
+				if(firstCurrIdxNode == null) {
+					firstCurrIdxNode = currNode;
 				}
+				lastCurrIdxNode = currNode;
 			}
 		}
-		this.endNodes.put(lastCurrIdxNode, lastIdx);
+		if (firstCurrIdxNode != null) {
+			this.startNodes.put(firstCurrIdxNode, this.nodeList.indexOf(firstCurrIdxNode) + 1);
+			this.endNodes.put(lastCurrIdxNode, this.nodeList.indexOf(lastCurrIdxNode) + 1);
+		}
 	}
 	
 	/**
@@ -102,10 +148,10 @@ public class POGraphGlobal extends AbstractPartialOrderGraph {
 		for(int i = 0; i < this.nodeList.size(); i++) {
 			POGNode currNode = this.nodeList.get(i);
 			if(this.startNodes.containsKey(currNode)) {
-				this.startNodes.put(currNode, i);
+				this.startNodes.put(currNode, i + 1);
 			}
 			if(this.endNodes.containsKey(currNode)) {
-				this.endNodes.put(currNode, i);
+				this.endNodes.put(currNode, i + 1);
 			}
 		}
 	}
@@ -118,15 +164,13 @@ public class POGraphGlobal extends AbstractPartialOrderGraph {
 		if(this.g.vertexSet().size() == 0) {
 			return;
 		}
-		POGNode firstNode = this.g.vertexSet().stream().filter(v -> g.inDegreeOf(v) == 0).findFirst().get();
-		this.startNodes.put(firstNode, 0);
-	
-		POGNode lastNode = this.g.vertexSet().stream().filter(v -> g.outDegreeOf(v) == 0).findFirst().get();
-		this.endNodes.put(lastNode, this.nodeList.size());
+		if (this.startNodes.isEmpty() || this.endNodes.isEmpty()) {
+			this.initializeEndpointMapsFromGraph();
+		}
 		
 		for(int i = 0; i < alignScoreMat.nrows(); i++) {
 			alignScoreMat.set(i, 0, i*scoreMat.gapPenalty());
-			if( i >= 1 && i < this.nodeList.size()) {
+			if( i >= 1 && i <= this.nodeList.size()) {
 				POGNode currNode = this.nodeList.get(i-1);
 				if(this.startNodes.containsKey(currNode)) {
 					this.alignScoreMat.set(i, 0, 0);
@@ -135,6 +179,23 @@ public class POGraphGlobal extends AbstractPartialOrderGraph {
 				}
 			}
 		}
+	}
+
+	private void initializeEndpointMapsFromGraph() {
+		for (int i = 0; i < this.nodeList.size(); i++) {
+			POGNode node = this.nodeList.get(i);
+			if (g.inDegreeOf(node) == 0) {
+				this.startNodes.put(node, i + 1);
+			}
+			if (g.outDegreeOf(node) == 0) {
+				this.endNodes.put(node, i + 1);
+			}
+		}
+	}
+
+	@Override
+	protected void afterMatrixInitialization() {
+		this.initStartNodesInMatrix();
 	}
 	
 	/**
@@ -202,13 +263,11 @@ public class POGraphGlobal extends AbstractPartialOrderGraph {
 		
 		for(POGNode endNode : this.endNodes.keySet()) {
 			int currEndIdx = this.endNodes.get(endNode);
-			System.out.println(currEndIdx + "\t" + endNode + "\t" + this.alignScoreMat.get(currEndIdx, maxSeqLen) + " > " + maxScore);
 			if(this.alignScoreMat.get(currEndIdx, maxSeqLen) > maxScore) {
 				maxScore = this.alignScoreMat.get(currEndIdx, maxSeqLen);
 				maxCell = new Pair<Integer,Integer>(currEndIdx, maxSeqLen);
 			}
 		}
-		System.out.println("MAX CELL:\t" + maxCell);
 		return maxCell;
 	}
 	

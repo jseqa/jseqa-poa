@@ -1,19 +1,23 @@
 package jseqa.poa.cli;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import jseqa.alignment.substitution.CustomDnaSubstitutionMatrix;
 import jseqa.fastq.Entry;
@@ -27,19 +31,12 @@ import jseqa.poa.PartialOrderAlignment;
 
 public class POAlign {
 	
-	private final static Logger log = LogManager.getLogger(POAlign.class);
-	
 	public static void main(String[] args) {		
 		CommandLineParser clParser = new DefaultParser();		
-		Options opts = new Options();
-		opts.addOption("h", "help", false, "display help");
-		opts.addOption("v", "verbose", false, "verbose output");
-		opts.addOption("i", "input", true, "input FASTA file");
-		opts.addOption("o", "output", true, "output MSA file");
-		opts.addOption("d", "dot", true, "output to DOT file");
-		opts.addOption("t", "type", true, "type of alignment [global/local/fitting/overlap]");
+		Options opts = createOptions();
 		HelpFormatter formatter = new HelpFormatter();
 		Path inputFasta = null;
+		Path inputAlignment = null;
 		Path outFile = null;
 		Path outDotFile = null;
 		String alnType = "global"; 
@@ -47,18 +44,15 @@ public class POAlign {
 			CommandLine cmd = clParser.parse(opts, args);
 			
 			if( cmd.hasOption("help") || (cmd.getOptions().length == 0)) {
-				formatter.printHelp("help", opts);
-				System.exit(-1);
-			}
-			if( cmd.hasOption("1") && !cmd.hasOption("2") ) {
-				System.err.println("Missing second read file, use -2");
-				System.exit(-1);
+				formatter.printHelp("poalign", opts);
+				return;
 			}
 			if(cmd.hasOption("i")) {
 				inputFasta = Paths.get(cmd.getOptionValue("i"));
+			} else if (cmd.hasOption("a")) {
+				inputAlignment = Paths.get(cmd.getOptionValue("a"));
 			} else {
-				System.err.println("input file required (-i)");
-				System.exit(-1);
+				throw new ParseException("one input is required: --input or --alignment");
 			}
 			//
 			if(cmd.hasOption("t")) {
@@ -72,7 +66,7 @@ public class POAlign {
 				} else if(val.equalsIgnoreCase("overlap")) {
 					alnType = "overlap";
 				} else {
-					alnType = "global";
+					throw new ParseException("Unknown alignment type: " + val);
 				}
 			}
 			if(cmd.hasOption("o")) {
@@ -82,42 +76,131 @@ public class POAlign {
 				outDotFile = Paths.get(cmd.getOptionValue("d"));
 			}
 		} catch (ParseException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
+			formatter.printHelp("poalign", opts);
+			return;
 		}
 		CustomDnaSubstitutionMatrix scoremat = new CustomDnaSubstitutionMatrix(5, -4, -4, -1);
-		PartialOrderAlignment poa = null;
-		
-		if(alnType.equalsIgnoreCase("global")) {
-			poa = new POGraphGlobal(scoremat);
-		} else if(alnType.equalsIgnoreCase("local")) {
-			poa = new POGraphLocal(scoremat);
-		} else if(alnType.equalsIgnoreCase("fitting")) {
-			poa = new POGraphFitting(scoremat);
-		} else if(alnType.equalsIgnoreCase("overlap")) {
-			poa = new POGraphOverlap(scoremat);
-		} else {
-			poa = new POGraphGlobal(scoremat);
-		}
-		
-		
-		try(FastaReader faread= new FastaReader(inputFasta)) {
-			for(Entry ent : faread) {
-				poa.add(ent.sequence());
+		PartialOrderAlignment poa;
+
+		try {
+			if (inputAlignment != null) {
+				poa = createGraphFromAlignment(alnType, scoremat,
+						readClustalAlignment(inputAlignment));
+			} else {
+				poa = createEmptyGraph(alnType, scoremat);
+				try(FastaReader faread = new FastaReader(inputFasta)) {
+					for(Entry ent : faread) {
+						poa.add(ent.sequence());
+					}
+				}
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (IOException | IllegalArgumentException e) {
+			System.err.println("Unable to read input: " + e.getMessage());
+			return;
 		}
 		
 		List<String> alnRows = poa.getAlignment();
 		if(outFile == null) {
-			System.out.println(alnRows);
+			for (String row : alnRows) {
+				System.out.println(row);
+			}
 		} else {
-			System.err.println("WRITING TO FILE NOT YET SUPPORTED");
+			try {
+				writeAlignment(outFile, alnRows);
+			} catch (IOException e) {
+				System.err.println("Unable to write alignment: " + e.getMessage());
+				return;
+			}
 		}
 		
 		if(outDotFile != null) {
 			poa.toDOT(outDotFile.toString());
 		}
+	}
+
+	static Options createOptions() {
+		Options options = new Options();
+		options.addOption("h", "help", false, "display help");
+		options.addOption("v", "verbose", false, "verbose output");
+		OptionGroup inputs = new OptionGroup();
+		inputs.addOption(new Option("i", "input", true, "input unaligned FASTA file"));
+		inputs.addOption(new Option("a", "alignment", true, "input CLUSTAL .aln file"));
+		options.addOptionGroup(inputs);
+		options.addOption("o", "output", true, "output MSA file");
+		options.addOption("d", "dot", true, "output to DOT file");
+		options.addOption("t", "type", true,
+				"type of alignment [global/local/fitting/overlap]");
+		return options;
+	}
+
+	static List<String> readClustalAlignment(Path input) throws IOException {
+		List<String> lines = Files.readAllLines(input, StandardCharsets.UTF_8);
+		Map<String,StringBuilder> rowsById = new LinkedHashMap<String,StringBuilder>();
+		boolean foundHeader = false;
+		for (String line : lines) {
+			String trimmed = line.trim();
+			if (trimmed.isEmpty()) {
+				continue;
+			}
+			if (!foundHeader) {
+				String upper = trimmed.toUpperCase();
+				if (!upper.startsWith("CLUSTAL") && !upper.startsWith("MUSCLE")) {
+					throw new IllegalArgumentException("missing CLUSTAL header");
+				}
+				foundHeader = true;
+				continue;
+			}
+			if (Character.isWhitespace(line.charAt(0)) || trimmed.startsWith("#")) {
+				continue;
+			}
+			String[] fields = trimmed.split("\\s+");
+			if (fields.length < 2 || !fields[1].matches("[A-Za-z*?.-]+")) {
+				throw new IllegalArgumentException("invalid alignment line: " + line);
+			}
+			StringBuilder row = rowsById.get(fields[0]);
+			if (row == null) {
+				row = new StringBuilder();
+				rowsById.put(fields[0], row);
+			}
+			row.append(fields[1].replace('.', '-'));
+		}
+		if (!foundHeader || rowsById.isEmpty()) {
+			throw new IllegalArgumentException("alignment contains no sequence rows");
+		}
+		List<String> rows = new ArrayList<String>(rowsById.size());
+		for (StringBuilder row : rowsById.values()) {
+			rows.add(row.toString());
+		}
+		return rows;
+	}
+
+	private static PartialOrderAlignment createEmptyGraph(String alignmentType,
+			CustomDnaSubstitutionMatrix scoremat) {
+		if(alignmentType.equalsIgnoreCase("local")) {
+			return new POGraphLocal(scoremat);
+		} else if(alignmentType.equalsIgnoreCase("fitting")) {
+			return new POGraphFitting(scoremat);
+		} else if(alignmentType.equalsIgnoreCase("overlap")) {
+			return new POGraphOverlap(scoremat);
+		}
+		return new POGraphGlobal(scoremat);
+	}
+
+	private static PartialOrderAlignment createGraphFromAlignment(String alignmentType,
+			CustomDnaSubstitutionMatrix scoremat, List<String> rows) {
+		if(alignmentType.equalsIgnoreCase("local")) {
+			return new POGraphLocal(rows, scoremat);
+		} else if(alignmentType.equalsIgnoreCase("fitting")) {
+			return new POGraphFitting(rows, scoremat);
+		} else if(alignmentType.equalsIgnoreCase("overlap")) {
+			return new POGraphOverlap(rows, scoremat);
+		}
+		return new POGraphGlobal(rows, scoremat);
+	}
+
+	static void writeAlignment(Path output, List<String> rows) throws IOException {
+		Files.write(output, rows, StandardCharsets.UTF_8);
 	}
 	
 	private POAlign() {}
