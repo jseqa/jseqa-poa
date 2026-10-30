@@ -90,7 +90,7 @@ public class POGraphFitting extends AbstractPartialOrderGraph {
 			alignScoreMat.set(0, j, j*scoreMat.gapPenalty());
 			if(j >= 1) { 
 				alignPtrMat.set(0, j, 0, j-1);
-				this.ptrMat.set(0, j, new POGPtr(new Pair<Integer,Integer>(0,j-1), alignScoreMat.get(0, j), PointerType.INS));
+				this.ptrMat.set(0, j, 0, j-1, alignScoreMat.get(0, j), PointerType.INS);
 			}
 		}
 		// reward using the entire sequence
@@ -98,7 +98,7 @@ public class POGraphFitting extends AbstractPartialOrderGraph {
 			alignScoreMat.set(i, 0, 0);
 			if( i >= 1) {
 				alignPtrMat.set(i, 0, 0, 0);
-				this.ptrMat.set(i, 0, new POGPtr(new Pair<Integer,Integer>(0,0), 0, PointerType.JUMP));
+				this.ptrMat.set(i, 0, 0, 0, 0, PointerType.JUMP);
 			}
 		}
 	}
@@ -111,16 +111,19 @@ public class POGraphFitting extends AbstractPartialOrderGraph {
 	@Override
 	protected Pair<Integer, Integer> backtrackFromCell(int maxSeqLen) {
 		Pair<Integer,Integer> maxCell = new Pair<Integer,Integer>(-1,-1);
-		double maxScore = -10000000.0;
-		
 		int maxCol = maxSeqLen;
 		for(int i = 0; i < this.numNodes()+1; i++) {
-			if(this.alignScoreMat.get(i, maxCol) > maxScore) {
-				maxScore = this.alignScoreMat.get(i, maxCol);
+			if(this.isBetterAlignmentCell(i, maxCol,
+					maxCell.first(), maxCell.second())) {
 				maxCell = new Pair<Integer,Integer> (i, maxCol);
 			}
 		}
 		return maxCell;
+	}
+
+	@Override
+	protected boolean isKBestEndCell(int row, int column, int queryLength) {
+		return column == queryLength;
 	}
 
 	@Override

@@ -1,7 +1,6 @@
 package jseqa.poa;
 
 import java.util.Collection;
-import java.util.List;
 
 import jseqa.alignment.substitution.SubstitutionMatrix;
 import jseqa.poa.POGPtr.PointerType;
@@ -12,6 +11,11 @@ import jseqa.util.Pair;
  *
  */
 public class POGraphLocal extends AbstractPartialOrderGraph {
+
+	@Override
+	protected boolean allowsUnalignedQueryEnds() {
+		return true;
+	}
 	
 	public POGraphLocal() {
 		super();
@@ -82,18 +86,15 @@ public class POGraphLocal extends AbstractPartialOrderGraph {
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected void fillCell(int i, 
-			   int j, 
-			   char prevSeqCh,
-			   char prevGraphCh,
-			   List<Integer> predIDX, 
-			   List<POGNode> predN) {
-		super.fillCell(i, j, prevSeqCh, prevGraphCh, predIDX, predN);
+	protected void fillCell(int i, int j, char prevSeqCh, char prevGraphCh,
+			int[] predecessorRows) {
+		super.fillCell(i, j, prevSeqCh, prevGraphCh, predecessorRows);
 				
 		if(this.alignScoreMat.get(i, j) <= 0) {
 			this.alignScoreMat.set(i, j, 0);
+			this.coherenceScoreMat.set(i, j, 0);
 			this.alignPtrMat.set(i, j, 0, 0);
-			this.ptrMat.set(i, j, new POGPtr(new Pair<Integer,Integer>(0,0), 0, PointerType.JUMP));
+			this.ptrMat.set(i, j, 0, 0, 0, PointerType.JUMP);
 		}
 	}
 	
@@ -107,14 +108,14 @@ public class POGraphLocal extends AbstractPartialOrderGraph {
 			alignScoreMat.set(0, j, 0);			
 			if(j >= 1) { 
 				alignPtrMat.set(0, j, 0, 0);
-				this.ptrMat.set(0, j, new POGPtr(new Pair<Integer,Integer>(0,0), 0, PointerType.JUMP));
+				this.ptrMat.set(0, j, 0, 0, 0, PointerType.JUMP);
 			}
 		}
 		for(int i = 0; i < alignScoreMat.nrows(); i++) {
 			alignScoreMat.set(i, 0, 0);
 			if( i >= 1) {
 				alignPtrMat.set(i, 0, 0, 0);
-				this.ptrMat.set(i, 0, new POGPtr(new Pair<Integer,Integer>(0,0), 0, PointerType.JUMP));
+				this.ptrMat.set(i, 0, 0, 0, 0, PointerType.JUMP);
 			}
 		}
 	}
@@ -127,16 +128,25 @@ public class POGraphLocal extends AbstractPartialOrderGraph {
 	@Override
 	protected Pair<Integer,Integer> backtrackFromCell(int maxSeqLen) {
 		Pair<Integer,Integer> maxCell = new Pair<Integer,Integer>(-1,-1);
-		double maxScore = -10000000.0;
 		for(int i = 0; i <= this.numNodes(); i++) {
 			for(int j = 0; j <= maxSeqLen; j++) {
-				if(this.alignScoreMat.get(i, j) > maxScore) {
-					maxScore = this.alignScoreMat.get(i, j);
+				if(this.isBetterAlignmentCell(i, j,
+						maxCell.first(), maxCell.second())) {
 					maxCell = new Pair<Integer,Integer> (i, j);
 				}
 			}
 		}		
 		return maxCell;
+	}
+
+	@Override
+	protected boolean allowsKBestLocalRestart() {
+		return true;
+	}
+
+	@Override
+	protected boolean isKBestEndCell(int row, int column, int queryLength) {
+		return true;
 	}
 
 	@Deprecated

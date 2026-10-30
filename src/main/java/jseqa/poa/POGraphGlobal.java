@@ -175,7 +175,7 @@ public class POGraphGlobal extends AbstractPartialOrderGraph {
 				if(this.startNodes.containsKey(currNode)) {
 					this.alignScoreMat.set(i, 0, 0);
 					alignPtrMat.set(i, 0, 0, 0);
-					this.ptrMat.set(i, 0, new POGPtr(new Pair<Integer,Integer>(0,0), 0, PointerType.JUMP));
+					this.ptrMat.set(i, 0, 0, 0, 0, PointerType.JUMP);
 				}
 			}
 		}
@@ -209,14 +209,14 @@ public class POGraphGlobal extends AbstractPartialOrderGraph {
 			alignScoreMat.set(0, j, j*scoreMat.gapPenalty());
 			if(j >= 1) { 
 				alignPtrMat.set(0, j, 0, j-1);
-				this.ptrMat.set(0, j, new POGPtr(new Pair<Integer,Integer>(0,j-1), alignScoreMat.get(0, j), PointerType.INS));
+				this.ptrMat.set(0, j, 0, j-1, alignScoreMat.get(0, j), PointerType.INS);
 			}
 		}
 		for(int i = 0; i < alignScoreMat.nrows(); i++) {
 			alignScoreMat.set(i, 0, i*scoreMat.gapPenalty());
 			if( i >= 1) {
 				alignPtrMat.set(i, 0, i-1, 0);
-				this.ptrMat.set(i, 0, new POGPtr(new Pair<Integer,Integer>(i-1,0), alignScoreMat.get(i, 0), PointerType.DEL));
+				this.ptrMat.set(i, 0, i-1, 0, alignScoreMat.get(i, 0), PointerType.DEL);
 			}
 		}
 	}
@@ -258,17 +258,34 @@ public class POGraphGlobal extends AbstractPartialOrderGraph {
 //		return new Pair<Integer,Integer>(this.initBacktrackFromNodeIndex(maxSeqLen), maxSeqLen);
 		this.updateStartEndNodeIndex();
 		Pair<Integer,Integer> maxCell = new Pair<Integer,Integer>(-1,-1);
-		int maxScore = -10000000;
-		
-		
 		for(POGNode endNode : this.endNodes.keySet()) {
 			int currEndIdx = this.endNodes.get(endNode);
-			if(this.alignScoreMat.get(currEndIdx, maxSeqLen) > maxScore) {
-				maxScore = this.alignScoreMat.get(currEndIdx, maxSeqLen);
+			if(this.isBetterAlignmentCell(currEndIdx, maxSeqLen,
+					maxCell.first(), maxCell.second())) {
 				maxCell = new Pair<Integer,Integer>(currEndIdx, maxSeqLen);
 			}
 		}
 		return maxCell;
+	}
+
+	/** Endpoint row order used by dense single-best tie handling. */
+	int[] alignmentEndRowsInSelectionOrder() {
+		this.updateStartEndNodeIndex();
+		int[] rows = new int[this.endNodes.size()];
+		int index = 0;
+		for (POGNode node : this.endNodes.keySet()) {
+			rows[index++] = this.endNodes.get(node);
+		}
+		return rows;
+	}
+
+	@Override
+	protected boolean isKBestEndCell(int row, int column, int queryLength) {
+		if (column != queryLength) {
+			return false;
+		}
+		this.updateStartEndNodeIndex();
+		return this.endNodes.containsValue(row);
 	}
 	
 	@Override
