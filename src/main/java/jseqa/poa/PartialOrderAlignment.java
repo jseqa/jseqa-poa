@@ -32,6 +32,21 @@ public interface PartialOrderAlignment {
 	 * @return List of {@code POGNodes} representing the path of the aligned sequence
 	 */
 	public List<POGNode> alignToGraph(String seq);
+
+	/**
+	 * Align a sequence once and return its best path together with its score.
+	 * @param seq sequence to align to the graph
+	 * @return best alignment path, interval, and primary score
+	 */
+	public POAAlignmentPath alignBestToGraph(String seq);
+
+	/**
+	 * Return up to {@code k} ranked sequence-to-graph alignment paths.
+	 * @param seq sequence to align
+	 * @param k maximum number of paths to retain and return
+	 * @return ranked, distinct alignment paths
+	 */
+	public List<POAAlignmentPath> alignToGraph(String seq, int k);
 	
 	/**
 	 * Compute the multiple sequence alignment (MSA) from the partial order graph.

@@ -22,11 +22,17 @@ import org.apache.commons.cli.ParseException;
 import jseqa.alignment.substitution.CustomDnaSubstitutionMatrix;
 import jseqa.fastq.Entry;
 import jseqa.fastq.FastaReader;
+import jseqa.poa.AgglomerativePOABuilder;
+import jseqa.poa.GuideTree;
+import jseqa.poa.Linkage;
+import jseqa.poa.PairwiseAlignmentMode;
 import jseqa.poa.POGraphFitting;
 import jseqa.poa.POGraphGlobal;
 import jseqa.poa.POGraphLocal;
 import jseqa.poa.POGraphOverlap;
 import jseqa.poa.PartialOrderAlignment;
+import jseqa.poa.ProgressivePOAResult;
+import jseqa.poa.ScoreNormalization;
 
 
 public class POAlign {
@@ -39,7 +45,13 @@ public class POAlign {
 		Path inputAlignment = null;
 		Path outFile = null;
 		Path outDotFile = null;
+		Path guideTreeOutput = null;
 		String alnType = "global"; 
+		String progressiveMode = "input-order";
+		Linkage linkage = Linkage.UPGMA;
+		ScoreNormalization normalization = ScoreNormalization.SELF_SCORE;
+		PairwiseAlignmentMode pairwiseMode = PairwiseAlignmentMode.GLOBAL;
+		int threads = 1;
 		try {
 			CommandLine cmd = clParser.parse(opts, args);
 			
@@ -75,6 +87,38 @@ public class POAlign {
 			if(cmd.hasOption("d")) {
 				outDotFile = Paths.get(cmd.getOptionValue("d"));
 			}
+			if (cmd.hasOption("progressive")) {
+				progressiveMode = cmd.getOptionValue("progressive").toLowerCase();
+				if (!progressiveMode.equals("input-order")
+						&& !progressiveMode.equals("agglomerative")) {
+					throw new ParseException("Unknown progressive mode: " + progressiveMode);
+				}
+			}
+			try {
+				if (cmd.hasOption("linkage")) {
+					linkage = Linkage.valueOf(cmd.getOptionValue("linkage").toUpperCase());
+				}
+				if (cmd.hasOption("score-normalization")) {
+					normalization = ScoreNormalization.valueOf(cmd
+							.getOptionValue("score-normalization").toUpperCase().replace('-', '_'));
+				}
+				if (cmd.hasOption("pairwise-mode")) {
+					pairwiseMode = PairwiseAlignmentMode.valueOf(cmd
+							.getOptionValue("pairwise-mode").toUpperCase());
+				}
+				if (cmd.hasOption("threads")) {
+					threads = Integer.parseInt(cmd.getOptionValue("threads"));
+					if (threads < 1) throw new NumberFormatException();
+				}
+			} catch (IllegalArgumentException e) {
+				throw new ParseException("Invalid agglomerative option value");
+			}
+			if (cmd.hasOption("guide-tree-output")) {
+				guideTreeOutput = Paths.get(cmd.getOptionValue("guide-tree-output"));
+			}
+			if (progressiveMode.equals("agglomerative") && inputAlignment != null) {
+				throw new ParseException("agglomerative mode requires unaligned FASTA input");
+			}
 		} catch (ParseException e) {
 			System.err.println(e.getMessage());
 			formatter.printHelp("poalign", opts);
@@ -82,11 +126,26 @@ public class POAlign {
 		}
 		CustomDnaSubstitutionMatrix scoremat = new CustomDnaSubstitutionMatrix(5, -4, -4, -1);
 		PartialOrderAlignment poa;
+		GuideTree guideTree = null;
 
 		try {
 			if (inputAlignment != null) {
 				poa = createGraphFromAlignment(alnType, scoremat,
 						readClustalAlignment(inputAlignment));
+			} else if (progressiveMode.equals("agglomerative")) {
+				List<String> sequences = new ArrayList<String>();
+				try(FastaReader faread = new FastaReader(inputFasta)) {
+					for(Entry ent : faread) {
+						sequences.add(ent.sequence());
+					}
+				}
+				ProgressivePOAResult result = new AgglomerativePOABuilder(
+						scoremat, linkage, normalization)
+						.pairwiseMode(pairwiseMode)
+						.threads(threads)
+						.build(sequences);
+				poa = result.graph();
+				guideTree = result.guideTree();
 			} else {
 				poa = createEmptyGraph(alnType, scoremat);
 				try(FastaReader faread = new FastaReader(inputFasta)) {
@@ -95,9 +154,24 @@ public class POAlign {
 					}
 				}
 			}
-		} catch (IOException | IllegalArgumentException e) {
+		} catch (IOException | RuntimeException e) {
 			System.err.println("Unable to read input: " + e.getMessage());
 			return;
+		}
+
+		if (guideTreeOutput != null) {
+			if (guideTree == null) {
+				System.err.println("Guide-tree output requires --progressive agglomerative");
+				return;
+			}
+			try {
+				Files.write(guideTreeOutput,
+						java.util.Collections.singletonList(guideTree.toNewick()),
+						StandardCharsets.UTF_8);
+			} catch (IOException e) {
+				System.err.println("Unable to write guide tree: " + e.getMessage());
+				return;
+			}
 		}
 		
 		List<String> alnRows = poa.getAlignment();
@@ -131,6 +205,16 @@ public class POAlign {
 		options.addOption("d", "dot", true, "output to DOT file");
 		options.addOption("t", "type", true,
 				"type of alignment [global/local/fitting/overlap]");
+		options.addOption(null, "progressive", true,
+				"progressive builder [input-order/agglomerative]");
+		options.addOption(null, "linkage", true,
+				"agglomerative linkage [upgma/single/complete/average]");
+		options.addOption(null, "pairwise-mode", true,
+				"pairwise scoring [global/overlap/fitting/local]");
+		options.addOption(null, "score-normalization", true,
+				"pairwise normalization [raw/min-length/max-length/mean-length/self-score]");
+		options.addOption(null, "guide-tree-output", true, "output guide tree in Newick format");
+		options.addOption(null, "threads", true, "bounded pairwise-scoring thread count");
 		return options;
 	}
 
