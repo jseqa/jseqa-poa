@@ -2,6 +2,7 @@ package jseqa.poa;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Node for a partial order alignment graph
@@ -27,7 +28,7 @@ public class POGNode {
 	/**
 	 * counter of number of instances
 	 */
-	private static int instanceCounter = -1;
+	private static final AtomicInteger INSTANCE_COUNTER = new AtomicInteger(-1);
 	
 	/**
 	 * instance counter accessible to the object
@@ -65,8 +66,7 @@ public class POGNode {
 	 */
 	private void init() {
 		idx = new LinkedList<Integer>();
-		instanceCounter++;
-		counter = instanceCounter;
+		counter = INSTANCE_COUNTER.incrementAndGet();
 	}
 	
 	/**
