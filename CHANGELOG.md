@@ -2,7 +2,7 @@
 
 Notable changes to jSeqA-poa are documented here.
 
-## [0.1.0] - Unreleased
+## [0.1.0]
 
 ### Added
 
@@ -12,28 +12,18 @@ Notable changes to jSeqA-poa are documented here.
 - Similarity-guided agglomerative POA construction with normalized affine-gap
   pairwise scoring, deterministic UPGMA/single/complete/average guide trees,
   and true profile-to-profile POA merging.
-- Inspectable guide-tree/Newick output and explicit MSA-row-to-input-index
   mappings, including distinct mappings for duplicate sequences.
 - Bounded parallel pairwise scoring with deterministic results across thread
   counts.
-- CLI options for agglomerative progression, linkage, pairwise mode, score
-  normalization, thread count, and guide-tree output. Input-order progression
-  remains the default.
 - Direct construction of global, local, fitting, and overlap POA graphs from
   an existing multiple sequence alignment.
 - Optional `PositionedPOGNode` nodes that retain one zero-based position per
   read at each graph node.
 - Extensible node creation through `POGNodeFactory`.
-- CLI support for CLUSTAL `.aln` input through `--alignment`; this option is
-  mutually exclusive with unaligned FASTA input through `--input`.
-- Regression coverage for alignment boundaries, graph copying, consensus,
-  matrix sizing, MSA import, positioned nodes, CLI input/output, and DOT output.
+- CLI support for CLUSTAL `.aln` input through `--alignment`.
 
 ### Fixed
 
-- Preserved every progressive input sequence exactly in generated MSAs by
-  ordering aligned-node components as a validated quotient DAG instead of
-  collapsing nodes within an individual-node topological order.
 - Retained locally unaligned read prefixes and suffixes in MSA output without
   changing the POA graph, alignment path, or consensus semantics.
 - Rejected cyclic alignment-column graphs and duplicate read membership within
@@ -45,7 +35,6 @@ Notable changes to jSeqA-poa are documented here.
   query-gap scoring.
 - Replaced fixed-size alignment matrices with matrices sized for the current
   graph and query.
-- Removed ten artificial trailing gap columns from generated MSAs.
 - Made graph copies independent, including nodes, aligned-node relationships,
   edge read metadata, and positioned-node metadata.
 - Corrected mismatch-node relationships and edge/read bookkeeping during
