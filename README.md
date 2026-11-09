@@ -19,7 +19,7 @@ Build the executable jar and align sequences from a FASTA file:
 
 ```shell
 mvn package
-java -jar target/jseqa-poa-0.2.2-SNAPSHOT-jar-with-dependencies.jar \
+java -jar target/jseqa-poa.jar \
   --input reads.fasta --type fitting --output alignment.txt --dot graph.dot
 ```
 
@@ -30,7 +30,7 @@ To construct the graph directly from a CLUSTAL-format MSA, use `--alignment`
 instead of `--input`:
 
 ```shell
-java -jar target/jseqa-poa-0.2.2-SNAPSHOT-jar-with-dependencies.jar \
+java -jar target/jseqa-poa.jar \
   --alignment existing.aln --type fitting --output alignment.txt
 ```
 
@@ -42,7 +42,7 @@ The default FASTA workflow remains input-order progressive alignment. To build
 a normalized pairwise-similarity guide tree and merge POA profiles bottom-up:
 
 ```shell
-java -jar target/jseqa-poa-0.2.2-SNAPSHOT-jar-with-dependencies.jar \
+java -jar target/jseqa-poa.jar \
   --input references.fasta \
   --output references.aln \
   --progressive agglomerative \
@@ -116,7 +116,7 @@ A fixture benchmark reports throughput, evaluated/dense cells, and fallbacks:
 
 ```shell
 mvn package test-compile
-java -cp target/test-classes:target/jseqa-poa-0.2.2-SNAPSHOT-jar-with-dependencies.jar \
+java -cp target/test-classes:target/jseqa-poa.jar \
   jseqa.poa.cli.SeededBandedPOABenchmark reference.aln queries.fasta 11 24 local
 ```
 
@@ -178,7 +178,7 @@ interval stability, and reports throughput, allocation per read, and GC count:
 
 ```shell
 mvn package test-compile
-java -cp target/test-classes:target/jseqa-poa-0.2.2-SNAPSHOT-jar-with-dependencies.jar \
+java -cp target/test-classes:target/jseqa-poa.jar \
   jseqa.poa.cli.POAPerformanceBenchmark \
   /path/to/V.aln /path/to/queries.fna 5
 ```
