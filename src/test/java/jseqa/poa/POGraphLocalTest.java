@@ -73,7 +73,8 @@ public class POGraphLocalTest {
 		for(POGNode currNode : pog) {
 			num++;
 		}
-		assertEquals(48, num);
+		// The final graph/query boundary is a valid alignment column.
+		assertEquals(49, num);
 		
 		for(int i = 0; i < seqs.size(); i++) {
 			List<POGNode> path = pog.alignToGraph(seqs.get(i));
@@ -235,7 +236,6 @@ public class POGraphLocalTest {
 		POGraphLocal poaG = new POGraphLocal(scoremat);
 		for(int i = 0; i < ids.size(); i++) {
 //		for(int i = 0; i < 2; i++) {
-			System.out.println(i + "\t" + refSeqs.get(i).length());
 //			poaG.add(refSeqs.get(i).substring(100));
 			poaG.add(refSeqs.get(i));
 		}

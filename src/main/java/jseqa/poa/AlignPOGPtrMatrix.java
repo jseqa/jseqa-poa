@@ -1,6 +1,9 @@
 package jseqa.poa;
 
+import java.util.Arrays;
 import jseqa.alignment.AbstractAlignmentMatrix;
+import jseqa.poa.POGPtr.PointerType;
+import jseqa.util.Pair;
 
 /**
  * Matrix holding backtracking pointers for a {@link com.digitalproteomics.sequence.poa.POGraph}.
@@ -9,9 +12,15 @@ import jseqa.alignment.AbstractAlignmentMatrix;
  *
  */
 public class AlignPOGPtrMatrix extends AbstractAlignmentMatrix {	
+	private static final PointerType[] POINTER_TYPES = PointerType.values();
 	
 	/** An integer matrix for the row pointer */
-	private POGPtr[][] ptrMat;
+	private int[] previousRows;
+	private int[] previousColumns;
+	private int[] scores;
+	private byte[] operations;
+	private int capacityRows;
+	private int capacityColumns;
 	
 	/**
 	 * Constructor that initializes an {@code nrows} x {@code ncols} matrix of 
@@ -20,13 +29,25 @@ public class AlignPOGPtrMatrix extends AbstractAlignmentMatrix {
 	 * @param ncols int number of columns
 	 */
 	public AlignPOGPtrMatrix(int nrows, int ncols) {
-		super(nrows, ncols);
-		ptrMat = new POGPtr[nrows][ncols];
-		for(int i = 0; i < nrows; i++) {
-			for(int j = 0; j < ncols; j++) {
-				ptrMat[i][j] = new POGPtr();
-			}
+		super(1, 1);
+		resize(nrows, ncols);
+	}
+
+	public void resize(int nrows, int ncols) {
+		if (previousRows == null || nrows > capacityRows || ncols > capacityColumns) {
+			capacityRows = grow(capacityRows, nrows);
+			capacityColumns = grow(capacityColumns, ncols);
+			int size = capacityRows * capacityColumns;
+			previousRows = new int[size];
+			previousColumns = new int[size];
+			scores = new int[size];
+			operations = new byte[size];
+			Arrays.fill(previousRows, -1);
+			Arrays.fill(previousColumns, -1);
+			Arrays.fill(operations, (byte) PointerType.UNDEF.ordinal());
 		}
+		this.numRows = nrows;
+		this.numCols = ncols;
 	}
 	
 	/** 
@@ -34,7 +55,7 @@ public class AlignPOGPtrMatrix extends AbstractAlignmentMatrix {
 	 */
 	@Override
 	public void clearCell(int i, int j) {		
-		ptrMat[i][j] = null;
+		set(i, j, -1, -1, 0, PointerType.UNDEF);
 	}
 
 	/**
@@ -53,7 +74,16 @@ public class AlignPOGPtrMatrix extends AbstractAlignmentMatrix {
 	 * @param ptr {@code POGPtr} backtracking pointer
 	 */
 	public void set(int i, int j, POGPtr ptr) {
-		ptrMat[i][j] = ptr;
+		set(i, j, ptr.ptr().first(), ptr.ptr().second(), ptr.score(), ptr.type());
+	}
+
+	public void set(int i, int j, int previousRow, int previousColumn,
+			int score, PointerType type) {
+		int index = index(i, j);
+		previousRows[index] = previousRow;
+		previousColumns[index] = previousColumn;
+		scores[index] = score;
+		operations[index] = (byte) type.ordinal();
 	}
 	
 	/**
@@ -63,7 +93,24 @@ public class AlignPOGPtrMatrix extends AbstractAlignmentMatrix {
 	 * @return {@code POGPtr} at the cell [i][j]
 	 */
 	public POGPtr get(int i, int j) {
-		return ptrMat[i][j];
+		return new POGPtr(new Pair<Integer,Integer>(previousRow(i, j), previousColumn(i, j)),
+				score(i, j), type(i, j));
+	}
+
+	public int previousRow(int i, int j) {
+		return previousRows[index(i, j)];
+	}
+
+	public int previousColumn(int i, int j) {
+		return previousColumns[index(i, j)];
+	}
+
+	public int score(int i, int j) {
+		return scores[index(i, j)];
+	}
+
+	public PointerType type(int i, int j) {
+		return POINTER_TYPES[operations[index(i, j)]];
 	}
 	
 //	/**
@@ -83,7 +130,19 @@ public class AlignPOGPtrMatrix extends AbstractAlignmentMatrix {
 
 	@Override
 	public String cellToString(int i, int j) {
-		return "" + this.ptrMat[i][j];
+		return "" + get(i, j);
+	}
+
+	private int index(int row, int column) {
+		return row * capacityColumns + column;
+	}
+
+	private static int grow(int current, int required) {
+		int grown = current == 0 ? 1 : current;
+		while (grown < required) {
+			grown = grown < 1024 ? grown * 2 : grown + grown / 2;
+		}
+		return grown;
 	}
 
 }

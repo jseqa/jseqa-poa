@@ -1,5 +1,6 @@
 package jseqa.poa;
 
+import java.util.Collection;
 import jseqa.alignment.substitution.SubstitutionMatrix;
 import jseqa.poa.POGPtr.PointerType;
 import jseqa.util.Pair;
@@ -10,11 +11,20 @@ import jseqa.util.Pair;
  */
 public class POGraphOverlap extends AbstractPartialOrderGraph {
 
+	@Override
+	protected boolean allowsUnalignedQueryEnds() {
+		return true;
+	}
+
 	/**
 	 * Default constructor.
 	 */
 	public POGraphOverlap() {
 		super();
+	}
+
+	public POGraphOverlap(POGNodeFactory nodeFactory) {
+		super(nodeFactory);
 	}
 	
 	/**
@@ -23,6 +33,18 @@ public class POGraphOverlap extends AbstractPartialOrderGraph {
 	public POGraphOverlap(String initseq) {
 		super(initseq);
 	}
+
+	public POGraphOverlap(String initseq, POGNodeFactory nodeFactory) {
+		super(initseq, nodeFactory);
+	}
+
+	public POGraphOverlap(Collection<String> alignment) {
+		super(alignment);
+	}
+
+	public POGraphOverlap(Collection<String> alignment, POGNodeFactory nodeFactory) {
+		super(alignment, nodeFactory);
+	}
 	
 	/**
 	 * {@inheritDoc}
@@ -30,12 +52,29 @@ public class POGraphOverlap extends AbstractPartialOrderGraph {
 	public POGraphOverlap(SubstitutionMatrix sm) {
 		super(sm);
 	}
+
+	public POGraphOverlap(SubstitutionMatrix sm, POGNodeFactory nodeFactory) {
+		super(sm, nodeFactory);
+	}
 	
 	/**
 	 * {@inheritDoc}
 	 */
 	public POGraphOverlap(String initSeq, SubstitutionMatrix sm) {
 		super(initSeq, sm);
+	}
+
+	public POGraphOverlap(String initSeq, SubstitutionMatrix sm, POGNodeFactory nodeFactory) {
+		super(initSeq, sm, nodeFactory);
+	}
+
+	public POGraphOverlap(Collection<String> alignment, SubstitutionMatrix sm) {
+		super(alignment, sm);
+	}
+
+	public POGraphOverlap(Collection<String> alignment, SubstitutionMatrix sm,
+			POGNodeFactory nodeFactory) {
+		super(alignment, sm, nodeFactory);
 	}
 
 	/**
@@ -54,14 +93,14 @@ public class POGraphOverlap extends AbstractPartialOrderGraph {
 			this.alignScoreMat.set(0, j, 0);
 			if(j >= 1) { 
 				this.alignPtrMat.set(0, j, 0, 0);
-				this.ptrMat.set(0, j, new POGPtr(new Pair<Integer,Integer>(0,0), 0, PointerType.JUMP));
+				this.ptrMat.set(0, j, 0, 0, 0, PointerType.JUMP);
 			}
 		}
 		for(int i = 0; i < this.alignScoreMat.nrows(); i++) {
 			this.alignScoreMat.set(i, 0, 0);
 			if( i >= 1) {
 				this.alignPtrMat.set(i, 0, 0, 0);
-				this.ptrMat.set(i, 0, new POGPtr(new Pair<Integer,Integer>(0,0), 0, PointerType.JUMP));
+				this.ptrMat.set(i, 0, 0, 0, 0, PointerType.JUMP);
 			}
 		}
 	}
@@ -74,23 +113,26 @@ public class POGraphOverlap extends AbstractPartialOrderGraph {
 	@Override
 	protected Pair<Integer,Integer> backtrackFromCell(int maxSeqLen) {
 		Pair<Integer,Integer> maxCell = new Pair<Integer,Integer>(-1,-1);
-		double maxScore = -10000000.0;
-		
 		int maxCol = maxSeqLen;
 		for(int i = 0; i < this.numNodes()+1; i++) {
-			if(this.alignScoreMat.get(i, maxCol) > maxScore) {
-				maxScore = this.alignScoreMat.get(i, maxCol);
+			if(this.isBetterAlignmentCell(i, maxCol,
+					maxCell.first(), maxCell.second())) {
 				maxCell = new Pair<Integer,Integer> (i, maxCol);
 			}
 		}
 		int maxRow = this.numNodes();
 		for(int j = 0; j < maxSeqLen+1; j++) {
-			if(this.alignScoreMat.get(maxRow, j) > maxScore) {
-				maxScore = this.alignScoreMat.get(maxRow, j);
+			if(this.isBetterAlignmentCell(maxRow, j,
+					maxCell.first(), maxCell.second())) {
 				maxCell = new Pair<Integer,Integer> (maxRow, j);
 			}
 		}
 		return maxCell;
+	}
+
+	@Override
+	protected boolean isKBestEndCell(int row, int column, int queryLength) {
+		return column == queryLength || row == this.numNodes();
 	}
 
 	@Override
