@@ -27,7 +27,7 @@ public interface PartialOrderAlignment {
 	
 	/**
 	 * Align the sequence to the POGraph without adding nodes/edges, and return the backtracked list of 
-	 * {@link com.digitalproteomics.sequence.poa.POGNode} representing the path of the aligned sequence.
+	 * {@link jseqa.poa.POGNode} representing the path of the aligned sequence.
 	 * @param seq {@code String} sequence to align to the POGraph
 	 * @return List of {@code POGNodes} representing the path of the aligned sequence
 	 */
@@ -81,7 +81,7 @@ public interface PartialOrderAlignment {
 	public int numNodes();
 	
 	/**
-	 * The {@link jseqa.util.digitalproteomics.sequence.poa.Interval} of the query sequence that was aligned last using
+	 * The {@link jseqa.util.Interval} of the query sequence that was aligned last using
 	 * {@link #alignToGraph(String)}
 	 * @return
 	 */

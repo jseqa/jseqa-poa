@@ -6,8 +6,8 @@ import jseqa.poa.POGPtr.PointerType;
 import jseqa.util.Pair;
 
 /**
- * Matrix holding backtracking pointers for a {@link com.digitalproteomics.sequence.poa.POGraph}.
- * An N x M matrix of {@link com.digitalproteomics.sequence.poa.POGPtr} objects used to backtrack
+ * Matrix holding backtracking pointers for a POGraph.
+ * An N x M matrix of {@link jseqa.poa.POGPtr} objects used to backtrack
  * alignments of the partial order graph.
  *
  */

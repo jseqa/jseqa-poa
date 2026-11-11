@@ -35,7 +35,7 @@ import jseqa.util.Interval;
 import jseqa.util.Pair;
 
 /**
- * Provides the skeletal implementation of Partial Order Graphs
+ * Provides the skeletal implementation of Partial Order Graphs.
  *
  */
 public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, PartialOrderAlignment {
@@ -45,16 +45,24 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 	
 	final private Pair<Integer,Integer> originPtr = new Pair<Integer,Integer>(0,0);
 	
-	/** Index of sequences added to POGraph */
+	/**
+	 * Index of sequences added to POGraph.
+	 */
 	protected int readIDX;
 
-	/** Original progressive inputs, used to retain locally unaligned read ends in MSAs. */
+	/**
+	 * Original progressive inputs, used to retain locally unaligned read ends in MSAs.
+	 */
 	private List<String> readSequences;
 	
-	/** Map from POGNode =&gt; index */
+	/**
+	 * Map from POGNode index.
+	 */
 	private HashMap<POGNode,Integer> nodeMap;
 	
-	/** List of nodes, providing a map back from index =&gt; POGNode */
+	/**
+	 * List of nodes, providing a map back from index POGNode.
+	 */
 	protected ArrayList<POGNode> nodeList;
 
 	/** Cached primitive topology used by repeated read-only alignments. */
@@ -67,14 +75,16 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 	private int topologyBuildCount;
 	private boolean colorCoherenceTieBreaking;
 	
-	/** scoring matrix, rows =&gt; graph, cols =&gt; sequence */
+	/**
+	 * Scoring matrix, rows = graph, cols = sequence.
+	 */
 //	protected AlignMatrixScore alignScoreMat;
 	protected AlignmentMatrixScore alignScoreMat;
 	/** Cumulative color-path coherence used to resolve primary-score ties. */
 	protected ReusableAlignmentMatrixScore coherenceScoreMat;
 	
 	/**
-	 * matrix of pointers to cells
+	 * matrix of pointers to cells.
 	 */
 	protected AlignPOAMatrixPtr alignPtrMat;
 	
@@ -91,7 +101,7 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 	/** Graph of aligned nodes */
 	protected UndirectedGraph<POGNode,POGEdge> alignedG;
 	
-	/** {@link #Interval} of the aligned query sequence */
+	/** {@link Interval} of the aligned query sequence. */
 	protected Interval queryIntval;
 
 	Map<POGEdge, Set<Integer>> edgeReadIdx;
@@ -141,7 +151,7 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 	
 	/**
 	 * Constructor that specifies a particular scoring matrix to use
-	 * @param sm {@link #ScoreMatrix} to use for scoring the alignments
+	 * @param sm {@link SubstitutionMatrix} to use for scoring the alignments
 	 */
 	public AbstractPartialOrderGraph(SubstitutionMatrix sm) {
 		this(sm, POGNodeFactory.standard());
@@ -290,7 +300,7 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 
 	/**
 	 * Align the sequence to the POGraph without adding nodes/edges, and return the backtracked list of 
-	 * {@link #POGNodes} representing the path of the aligned sequence.
+	 * {@link POGNode} instances representing the path of the aligned sequence.
 	 * @param seq {@code String} sequence to align to the POGraph
 	 * @return List of {@code POGNodes} representing the path of the aligned sequence
 	 */
@@ -873,7 +883,7 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 	
 	/**
 	 * Initialize score and backtrack pointer matrices, along with the POGraph. Uses
-	 * {@link #DNAScoreMatrix} by as the default
+	 * {@link DnaSubstitutionMatrix} as the default.
 	 */
 	protected void init() {
 		this.init(new DnaSubstitutionMatrix(-4, -4));
@@ -1553,10 +1563,8 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 	 * Fills a cell in the score/ptr matrix
 	 * @param i
 	 * @param j
-	 * @param prevSeqCh
-	 * @param prevGraphCh
-	 * @param predIDX
-	 * @param predN
+	 * @param sequenceBase
+	 * @param graphBase
 	 */
 	protected void fillCell(int i, int j, char sequenceBase, char graphBase,
 			int[] predecessorRows) {
@@ -1771,7 +1779,7 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 	}
 	
 	/**
-	 * The {@link #Interval} of the query sequence that was aligned last using
+	 * The {@link Interval} of the query sequence that was aligned last using
 	 * {@link #alignToGraph(String)}
 	 * @return
 	 */
