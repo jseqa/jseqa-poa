@@ -1,5 +1,8 @@
 # jSeqA-poa
 
+[![CI](https://github.com/jseqa/jseqa-poa/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/jseqa/jseqa-poa/actions/workflows/ci.yml)
+[![Coverage Status](https://coveralls.io/repos/github/jseqa/jseqa-poa/badge.svg?branch=master)](https://coveralls.io/github/jseqa/jseqa-poa?branch=master)
+
 Java partial-order alignment (POA) support for the `jseqa` sequence-alignment
 library. The project provides global, local, fitting, and overlap alignment
 graphs and can emit a multiple sequence alignment, consensus sequence, or DOT

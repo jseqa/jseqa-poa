@@ -116,6 +116,11 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 		this(POGNodeFactory.standard());
 	}
 
+	/**
+	 * Creates an empty graph using the supplied node factory.
+	 *
+	 * @param nodeFactory factory used to create and copy graph nodes
+	 */
 	protected AbstractPartialOrderGraph(POGNodeFactory nodeFactory) {
 		this.nodeFactory = requireNodeFactory(nodeFactory);
 		this.init();
@@ -130,6 +135,12 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 		this(initseq, POGNodeFactory.standard());
 	}
 
+	/**
+	 * Creates a graph initialized from one sequence using the supplied node factory.
+	 *
+	 * @param initseq sequence used to initialize the graph
+	 * @param nodeFactory factory used to create and copy graph nodes
+	 */
 	protected AbstractPartialOrderGraph(String initseq, POGNodeFactory nodeFactory) {
 		this.nodeFactory = requireNodeFactory(nodeFactory);
 		this.init();
@@ -137,10 +148,22 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 		this.initGraph(initseq);
 	}
 
+	/**
+	 * Creates a graph from the rows of an existing multiple sequence alignment.
+	 *
+	 * @param alignment aligned sequences with equal lengths
+	 */
 	protected AbstractPartialOrderGraph(Collection<String> alignment) {
 		this(alignment, POGNodeFactory.standard());
 	}
 
+	/**
+	 * Creates a graph from an existing multiple sequence alignment using the
+	 * supplied node factory.
+	 *
+	 * @param alignment aligned sequences with equal lengths
+	 * @param nodeFactory factory used to create and copy graph nodes
+	 */
 	protected AbstractPartialOrderGraph(Collection<String> alignment,
 			POGNodeFactory nodeFactory) {
 		this.nodeFactory = requireNodeFactory(nodeFactory);
@@ -157,6 +180,12 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 		this(sm, POGNodeFactory.standard());
 	}
 
+	/**
+	 * Creates an empty graph with a scoring matrix and node factory.
+	 *
+	 * @param sm substitution matrix used to score alignments
+	 * @param nodeFactory factory used to create and copy graph nodes
+	 */
 	protected AbstractPartialOrderGraph(SubstitutionMatrix sm, POGNodeFactory nodeFactory) {
 		this.nodeFactory = requireNodeFactory(nodeFactory);
 		this.init(sm);
@@ -173,6 +202,14 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 		this(initSeq, sm, POGNodeFactory.standard());
 	}
 
+	/**
+	 * Creates a graph initialized from one sequence with the supplied scoring
+	 * matrix and node factory.
+	 *
+	 * @param initSeq sequence used to initialize the graph
+	 * @param sm substitution matrix used to score alignments
+	 * @param nodeFactory factory used to create and copy graph nodes
+	 */
 	protected AbstractPartialOrderGraph(String initSeq, SubstitutionMatrix sm,
 			POGNodeFactory nodeFactory) {
 		this.nodeFactory = requireNodeFactory(nodeFactory);
@@ -181,11 +218,26 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 		this.initGraph(initSeq);
 	}
 
+	/**
+	 * Creates a graph from an existing multiple sequence alignment using the
+	 * supplied scoring matrix.
+	 *
+	 * @param alignment aligned sequences with equal lengths
+	 * @param sm substitution matrix used to score alignments
+	 */
 	protected AbstractPartialOrderGraph(Collection<String> alignment,
 			SubstitutionMatrix sm) {
 		this(alignment, sm, POGNodeFactory.standard());
 	}
 
+	/**
+	 * Creates a graph from an existing multiple sequence alignment using the
+	 * supplied scoring matrix and node factory.
+	 *
+	 * @param alignment aligned sequences with equal lengths
+	 * @param sm substitution matrix used to score alignments
+	 * @param nodeFactory factory used to create and copy graph nodes
+	 */
 	protected AbstractPartialOrderGraph(Collection<String> alignment,
 			SubstitutionMatrix sm, POGNodeFactory nodeFactory) {
 		this.nodeFactory = requireNodeFactory(nodeFactory);
@@ -196,7 +248,7 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 	
 	/**
 	 * Copy constructor that performs an independent copy of graph data structures.
-	 * @param otherPOG
+	 * @param otherPOG graph whose data structures are copied
 	 */
 	public AbstractPartialOrderGraph(AbstractPartialOrderGraph otherPOG) {
 		this.nodeFactory = otherPOG.nodeFactory;
@@ -420,12 +472,23 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 		}
 	}
 
-	/** Whether an interior cell can restart a local alignment at zero. */
+	/**
+	 * Indicates whether an interior cell can restart a local alignment at zero.
+	 *
+	 * @return {@code true} when local restarts are permitted
+	 */
 	protected boolean allowsKBestLocalRestart() {
 		return false;
 	}
 
-	/** Whether a cell can terminate a k-best alignment for this alignment mode. */
+	/**
+	 * Indicates whether a cell can terminate a k-best alignment for this mode.
+	 *
+	 * @param row matrix row of the candidate cell
+	 * @param column matrix column of the candidate cell
+	 * @param queryLength length of the query sequence
+	 * @return {@code true} when the candidate is a valid terminal cell
+	 */
 	protected abstract boolean isKBestEndCell(int row, int column, int queryLength);
 
 	private List<KBestEndpoint> selectKBestEndpoints(KBestAlignmentMatrix matrix,
@@ -691,7 +754,11 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 		return completeRows;
 	}
 
-	/** Whether this alignment mode can legitimately omit query prefixes or suffixes. */
+	/**
+	 * Indicates whether this mode can legitimately omit query prefixes or suffixes.
+	 *
+	 * @return {@code true} when unaligned query ends are permitted
+	 */
 	protected boolean allowsUnalignedQueryEnds() {
 		return false;
 	}
@@ -928,7 +995,11 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 		readSequences.add(seq);
 	}	
 
-	/** Build a graph that preserves the columns of an existing MSA exactly. */
+	/**
+	 * Builds a graph that preserves the columns of an existing MSA exactly.
+	 *
+	 * @param alignment aligned sequences with equal lengths and no all-gap columns
+	 */
 	protected void initGraphFromAlignment(Collection<String> alignment) {
 		List<String> rows = validateAlignment(alignment);
 		this.invalidateTopologyCache();
@@ -1011,6 +1082,12 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 		return rows;
 	}
 
+	/**
+	 * Associates a read index with an edge, ignoring a null edge.
+	 *
+	 * @param e edge traversed by the read
+	 * @param idx read index to associate with the edge
+	 */
 	protected void safeEdgeAddIdx(POGEdge e, int idx) {
 		if (e == null) {
 			return;
@@ -1032,12 +1109,21 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 
 	/**
 	 * Return the cell in the score matrix to start backtracking from, with first => node IDX, and second => seq IDX.
-	 * @param maxSeqLen 
-	 * @return
+	 * @param maxSeqLen length of the aligned query sequence
+	 * @return matrix cell from which backtracking should begin
 	 */
 	abstract protected Pair<Integer,Integer> backtrackFromCell(int maxSeqLen);
 
-	/** Compare completed DP cells by primary score, then cumulative color coherence. */
+	/**
+	 * Compares a completed DP cell with the best cell found so far, first by
+	 * primary score and then by cumulative color coherence.
+	 *
+	 * @param row row of the candidate cell
+	 * @param column column of the candidate cell
+	 * @param bestRow row of the current best cell, or a negative value if absent
+	 * @param bestColumn column of the current best cell, or a negative value if absent
+	 * @return {@code true} if the candidate cell is better
+	 */
 	protected boolean isBetterAlignmentCell(int row, int column,
 			int bestRow, int bestColumn) {
 		if (bestRow < 0 || bestColumn < 0) {
@@ -1050,15 +1136,23 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 				> coherenceScoreMat.get(bestRow, bestColumn));
 	}
 	
+	/**
+	 * Returns the pointer from which backtracking should begin.
+	 *
+	 * @param maxSeqLen length of the aligned query sequence
+	 * @return initial backtracking pointer
+	 */
 	abstract protected POGPtr backtrackFromPtr(int maxSeqLen);
 	
 	/**
-	 * 
-	 * @param seq
-	 * @param prevNode
-	 * @param currPos
-	 * @param s1
-	 * @param s2
+	 * Backtracks through the alignment matrix and incorporates the query path
+	 * into the graph.
+	 *
+	 * @param seq aligned query sequence
+	 * @param prevNode previously visited graph node during reverse traversal
+	 * @param currPos current matrix position
+	 * @param s1 accumulated graph-side alignment text used for tracing
+	 * @param s2 accumulated query-side alignment text used for tracing
 	 */
 	protected void backtrackBuild(String seq,
 									POGNode prevNode,
@@ -1167,6 +1261,17 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 							s2);
 	}
 
+	/**
+	 * Backtracks an alignment into a graph-node path without modifying the graph.
+	 *
+	 * @param seq aligned query sequence
+	 * @param prevNode previously visited graph node during reverse traversal
+	 * @param currPos current matrix position
+	 * @param s1 accumulated graph-side alignment text used for tracing
+	 * @param s2 accumulated query-side alignment text used for tracing
+	 * @param path path accumulated during reverse traversal
+	 * @return the completed path in query order
+	 */
 	protected List<POGNode> backtrackPathRecurse(String seq,
 												POGNode prevNode,
 												Pair<Integer,Integer> currPos,
@@ -1241,7 +1346,7 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 	
 	/**
 	 * Backtrack and add nodes to POGraph
-	 * @param seq
+	 * @param seq aligned query sequence
 	 */
 	protected void backtrack(String seq) {
 		Pair<Integer,Integer> endCell = this.backtrackFromCell(seq.length());
@@ -1258,14 +1363,14 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 	
 	/**
 	 * Backtrack and build a path in the POGraph by recursing (tail-recursive).
-	 * @param seq
-	 * @param prevNode
-	 * @param currP
-	 * @param prevP
-	 * @param s1
-	 * @param s2
-	 * @param path
-	 * @return
+	 * @param seq aligned query sequence
+	 * @param prevNode previously visited graph node during reverse traversal
+	 * @param currP current matrix position
+	 * @param prevP previous matrix position
+	 * @param s1 accumulated graph-side alignment text used for tracing
+	 * @param s2 accumulated query-side alignment text used for tracing
+	 * @param path path accumulated during reverse traversal
+	 * @return the completed path in query order
 	 * @deprecated
 	 */
 	protected List<POGNode> backtrackPathRecurse(String seq,
@@ -1332,8 +1437,8 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 	
 	/**
 	 * Backtracks a the sequence that has already been used to fill the matrix using {@link #alignSequence(String)}.
-	 * @param seq
-	 * @return
+	 * @param seq aligned query sequence
+	 * @return graph-node path corresponding to the query alignment
 	 */
 	protected List<POGNode> backtrackPath(String seq) {
 		Pair<Integer,Integer> endCell = this.backtrackFromCell(seq.length());
@@ -1517,6 +1622,11 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 //				+ this.g.edgeSet().size());		
 	}
 	
+	/**
+	 * Fills the dynamic-programming matrices for a query sequence.
+	 *
+	 * @param seq query sequence to align
+	 */
 	protected void alignSequence(String seq) {
 		computeInternalDS();
 		prepareMatrices(seq.length());
@@ -1530,7 +1640,11 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 		}
 	}
 
-	/** Allocate matrices for exactly the graph and query currently being aligned. */
+	/**
+	 * Allocates matrices for exactly the graph and query currently being aligned.
+	 *
+	 * @param sequenceLength length of the query sequence
+	 */
 	protected void prepareMatrices(int sequenceLength) {
 		int rows = this.nodeList.size() + 1;
 		int columns = sequenceLength + 1;
@@ -1561,10 +1675,11 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 	
 	/**
 	 * Fills a cell in the score/ptr matrix
-	 * @param i
-	 * @param j
-	 * @param sequenceBase
-	 * @param graphBase
+	 * @param i graph row to fill
+	 * @param j query column to fill
+	 * @param sequenceBase query residue at this column
+	 * @param graphBase graph-node residue at this row
+	 * @param predecessorRows one-based matrix rows of predecessor graph nodes
 	 */
 	protected void fillCell(int i, int j, char sequenceBase, char graphBase,
 			int[] predecessorRows) {
@@ -1664,7 +1779,16 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 		return overlap;
 	}
 
-	/** Compatibility bridge for subclasses using the former boxed predecessor API. */
+	/**
+	 * Compatibility bridge for subclasses using the former boxed predecessor API.
+	 *
+	 * @param i graph row to fill
+	 * @param j query column to fill
+	 * @param sequenceBase query residue at this column
+	 * @param graphBase graph-node residue at this row
+	 * @param predecessorIndices one-based matrix rows of predecessor graph nodes
+	 * @param predecessorNodes predecessor nodes retained for source compatibility
+	 */
 	@Deprecated
 	protected void fillCell(int i, int j, char sequenceBase, char graphBase,
 			List<Integer> predecessorIndices, List<POGNode> predecessorNodes) {
@@ -1740,6 +1864,7 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 		return new POAAlignmentTopologyView(nodes, predecessors);
 	}
 
+	/** Invalidates the cached topological ordering and predecessor arrays. */
 	protected void invalidateTopologyCache() {
 		this.topologyCacheValid = false;
 	}
@@ -1751,6 +1876,8 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 	/**
 	 * Compute the ordering of nodes, performed after the graph is perturbed.
 	 * Runs topological sort and records the ordering.
+	 *
+	 * @return map from each graph node to its zero-based topological index
 	 */
 	protected HashMap<POGNode,Integer> computeOrder() {
 		HashMap<POGNode,Integer> nodeIDX = 
@@ -1767,29 +1894,34 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 	}
 	
 	/**
-	 * 
-	 * @return
+	 * Get number of columns.
+	 * @return int number of columns.
 	 */
 	protected int getNumCols() {
 		return computeAlignmentColumns().size();
 	}	
 	
+	/**
+	 * Get number of nodes in POA graph.
+	 * @return int number of nodes.
+	 */
 	public int numNodes() {
 		return this.g.vertexSet().size();
 	}
 	
 	/**
 	 * The {@link Interval} of the query sequence that was aligned last using
-	 * {@link #alignToGraph(String)}
-	 * @return
+	 * {@link #alignToGraph(String)}.
+	 * @return interval of the query covered by the most recent alignment
 	 */
 	public Interval queryInterval() {
 		return this.queryIntval;
 	}	
 	
 	/**
-	 * 
-	 * @return
+	 * Returns an iterator over representative nodes in alignment-column order.
+	 *
+	 * @return graph-node iterator
 	 */
 	@Override
 	public Iterator<POGNode> iterator() {
