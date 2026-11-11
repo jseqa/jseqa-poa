@@ -4,7 +4,7 @@ import jseqa.alignment.AbstractAlignmentMatrix;
 import jseqa.util.Pair;
 
 /**
- * Alignment pointer matrix for the {@link com.digitalproteomics.sequence.poa.POGraph}
+ * Alignment pointer matrix for the {@link jseqa.poa.AbstractPartialOrderGraph}.
  *
  */
 public class AlignPOAMatrixPtr extends AbstractAlignmentMatrix {

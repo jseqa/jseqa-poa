@@ -1,0 +1,54 @@
+name: Publish to Maven Central
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag, for example v0.1.0
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish ${{ inputs.tag }}
+    runs-on: ubuntu-latest
+    environment: maven-central
+
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Set up Java and Maven publishing
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+          server-id: central
+          server-username-env-var: CENTRAL_USERNAME
+          server-password-env-var: CENTRAL_TOKEN
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase-env-var: MAVEN_GPG_PASSPHRASE
+
+      - name: Verify tag matches Maven version
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          PROJECT_VERSION="$(mvn help:evaluate \
+            -Dexpression=project.version \
+            -q \
+            -DforceStdout)"
+          test "v${PROJECT_VERSION}" = "${RELEASE_TAG}"
+
+      - name: Build, sign, and upload
+        run: mvn --batch-mode --no-transfer-progress clean deploy -Pcentral-release
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
