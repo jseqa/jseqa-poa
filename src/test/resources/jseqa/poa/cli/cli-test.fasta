@@ -1,0 +1,10 @@
+>reference
+ACGTCAGT
+>exact_match
+ACGTCAGT
+>single_substitution
+ACGTTAGT
+>single_insertion
+ACGTGCAGT
+>single_deletion
+ACGTAGT

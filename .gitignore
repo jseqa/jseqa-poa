@@ -5,6 +5,12 @@
 *.fastq
 *.fq
 
+# Keep test fixtures even when their extensions match ignored sequence data.
+!src/test/resources/**/*.fa
+!src/test/resources/**/*.fasta
+!src/test/resources/**/*.fastq
+!src/test/resources/**/*.fq
+
 .classpath
 .project
 .settings/*

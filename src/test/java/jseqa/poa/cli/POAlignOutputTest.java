@@ -1,14 +1,14 @@
 package jseqa.poa.cli;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,7 +56,9 @@ public class POAlignOutputTest {
 
 	@Test
 	public void buildsPoaFromExpectedAlignmentAndWritesCorrectDotGraph() throws Exception {
-		Path alignment = Paths.get("examples", "cli-test.expected.aln");
+		URL alignmentResource = POAlignOutputTest.class.getResource("cli-test.expected.aln");
+		assertNotNull("missing cli-test.expected.aln test resource", alignmentResource);
+		Path alignment = Paths.get(alignmentResource.toURI());
 		List<String> rows = Files.readAllLines(alignment, StandardCharsets.UTF_8);
 		POGraphFitting graph = new POGraphFitting(rows);
 		Path dotOutput = temporaryFolder.newFile("cli-test.dot").toPath();
@@ -85,8 +87,6 @@ public class POAlignOutputTest {
 				throw new AssertionError("Unexpected DOT line: " + line);
 			}
 		}
-
-        //Files.copy(dotOutput, Paths.get("/tmp/cli-test.dot"), StandardCopyOption.REPLACE_EXISTING);
 		assertEquals(10, graph.numNodes());
 		assertEquals(graph.numNodes(), nodeIds.size());
 		assertEquals(graph.getGraph().edgeSet().size(), edgeCount);

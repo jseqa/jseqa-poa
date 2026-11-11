@@ -1,0 +1,8 @@
+CLUSTAL W multiple sequence alignment
+
+reference             ACGTC-AGT  8
+exact_match           ACGTC-AGT  8
+single_substitution   ACGTT-AGT  8
+single_insertion      ACGTCGAGT  9
+single_deletion       ACGT--AGT  7
+                      ****  ***
