@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.jseqa</groupId>
   <artifactId>jseqa-poa</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
   <packaging>jar</packaging>
 
   <name>jSeqA POA</name>
@@ -249,12 +249,12 @@
   	<dependency>
   		<groupId>org.jgrapht</groupId>
   		<artifactId>jgrapht-core</artifactId>
-  		<version>1.1.0</version>
+		<version>1.4.0</version>
   	</dependency>
   	<dependency>
   		<groupId>org.jgrapht</groupId>
   		<artifactId>jgrapht-ext</artifactId>
-  		<version>1.1.0</version>
+		<version>1.4.0</version>
   	</dependency>
   	<dependency>
   		<groupId>junit</groupId>

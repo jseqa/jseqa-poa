@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import org.jgrapht.UndirectedGraph;
+import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.SimpleGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
@@ -99,7 +99,7 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 	protected DefaultDirectedGraph<POGNode,POGEdge> g;
 	
 	/** Graph of aligned nodes */
-	protected UndirectedGraph<POGNode,POGEdge> alignedG;
+	protected Graph<POGNode,POGEdge> alignedG;
 	
 	/** {@link Interval} of the aligned query sequence. */
 	protected Interval queryIntval;
@@ -1932,7 +1932,7 @@ public abstract class AbstractPartialOrderGraph implements Iterable<POGNode>, Pa
 		private final Iterator<POGNode> columns;
 
 		POGIterator(DefaultDirectedGraph<POGNode,POGEdge> pog,
-				UndirectedGraph<POGNode,POGEdge> ag) {
+				Graph<POGNode,POGEdge> ag) {
 			List<POGNode> representatives = new ArrayList<POGNode>();
 			for (List<POGNode> column : AbstractPartialOrderGraph.this.computeAlignmentColumns()) {
 				representatives.add(column.get(0));
