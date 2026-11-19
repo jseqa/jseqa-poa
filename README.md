@@ -6,7 +6,21 @@
 Java partial-order alignment (POA) support for the `jseqa` sequence-alignment
 library. The project provides global, local, fitting, and overlap alignment
 graphs and can emit a multiple sequence alignment, consensus sequence, or DOT
-graph.
+graph for visualization.
+
+## Use as library
+
+Add the following to your pom.xml to use jseqa-poa subsituting `x.y.z` for the latest verison:
+
+```
+<dependency>
+    <groupId>io.github.jseqa</groupId>
+    <artifactId>jseqa-poa</artifactId>
+    <version>x.y.z</version>
+</dependency>
+```
+
+See below for different example usages.
 
 ## Build and test
 

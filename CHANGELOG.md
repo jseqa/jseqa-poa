@@ -2,6 +2,10 @@
 
 Notable changes to jSeqA-poa are documented here.
 
+## [0.1.1]
+### Changed
+- Upped jgrapht depdendency version to 1.4.0.
+
 ## [0.1.0]
 
 ### Added
